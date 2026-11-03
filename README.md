@@ -9,7 +9,7 @@ It started as a byproduct of [Saathi](https://github.com/akshatinnovate-png/Saat
 | | |
 |---|---|
 | **Sahay for Windows** | [**Sahay.exe**](https://github.com/akshatinnovate-png/Sahay/releases/latest/download/Sahay.exe) from the [latest release](https://github.com/akshatinnovate-png/Sahay/releases/latest). Run it, paste a free Groq key from [console.groq.com/keys](https://console.groq.com/keys), and tell it what to do. |
-| **Sahay for Android** | **Sahay-Android-x.y.z.apk** from the [releases](https://github.com/akshatinnovate-png/Sahay/releases). Built on Senku by Steve Aldrin, with every charge removed, running on your own free Gemini key. See [android/](android/). |
+| **Sahay for Android** | **Sahay-Android-x.y.z.apk** from the [releases](https://github.com/akshatinnovate-png/Sahay/releases). See [android/](android/). |
 
 Windows may say "Windows protected your PC" for a new download: choose **More info**, then **Run anyway**.
 
