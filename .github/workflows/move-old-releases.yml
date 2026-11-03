@@ -1,0 +1,39 @@
+name: Move old releases from Saathi
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  move:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      FROM: akshatinnovate-png/Saathi-Alexa
+    steps:
+      - name: Copy every sahay-v* release, oldest first
+        run: |
+          set -euo pipefail
+          tags=$(gh release list -R "$FROM" --limit 200 --json tagName,createdAt -q 'sort_by(.createdAt) | .[] | .tagName' | grep '^sahay-v' || true)
+          [ -n "$tags" ] || { echo "No Sahay releases left in $FROM"; exit 0; }
+          last=""
+          for tag in $tags; do
+            v="${tag#sahay-v}"
+            if gh release view "v$v" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+              echo "v$v already here"
+            else
+              dir="dl/$v"
+              mkdir -p "$dir"
+              gh release download "$tag" -R "$FROM" -D "$dir"
+              gh release view "$tag" -R "$FROM" --json body -q .body > "$dir.notes"
+              gh release create "v$v" "$dir"/* -R "$GITHUB_REPOSITORY" --target main --title "Sahay v$v" --notes-file "$dir.notes" --latest=false
+              echo "copied $tag to v$v"
+            fi
+            last="$v"
+          done
+          dir="latest"
+          mkdir -p "$dir"
+          gh release download "v$last" -R "$GITHUB_REPOSITORY" -p "Sahay-$last.exe" -D "$dir"
+          cp "$dir/Sahay-$last.exe" "$dir/Sahay.exe"
+          gh release upload "v$last" "$dir/Sahay.exe" -R "$GITHUB_REPOSITORY" --clobber
+          gh release edit "v$last" -R "$GITHUB_REPOSITORY" --latest
+          echo "v$last is the latest release, with Sahay.exe"
