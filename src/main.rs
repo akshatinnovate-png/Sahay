@@ -4,6 +4,7 @@
 mod actions;
 mod agent;
 mod config;
+mod guard;
 mod guides;
 mod intent;
 mod knowledge;
@@ -23,7 +24,7 @@ fn main() {
 
 #[cfg(not(windows))]
 fn main() {
-    let _ = (knowledge::parse_dataset(""), knowledge::Index::build(&[]).template_plan(&[], ""), knowledge::as_hints(&knowledge::Index::build(&[]).similar(&[], "", 1)), knowledge::load_trusted(""), knowledge::to_line(&knowledge::Example { task: String::new(), steps: Vec::new(), say: String::new() }), guides::notes("", &[]), web::page_text("", 1), web::split_url("a.b"), web::summarise(&web::bing(""), 1), web::duckduckgo(""), intent::route("open youtube"), intent::first_video_id(""), plan::parse("wait 1"), agent::tools(), mover::resolve("x", &[]), retry::Fleet::new(1, Vec::new()), config::Config::default(), actions::vk("enter"), saathi::TOOLS, tasks::parse_task(204, ""), tasks::next as fn(u16) -> Result<Option<tasks::Task>, String>, tasks::report as fn(u16, &str, &str, &str) -> Result<(), String>);
+    let _ = (knowledge::parse_dataset(""), knowledge::Index::build(&[]).template_plan(&[], ""), knowledge::as_hints(&knowledge::Index::build(&[]).similar(&[], "", 1)), knowledge::load_trusted(""), knowledge::to_line(&knowledge::Example { task: String::new(), steps: Vec::new(), say: String::new() }), guides::notes("", &[]), web::page_text("", 1), web::split_url("a.b"), web::summarise(&web::bing(""), 1), web::duckduckgo(""), intent::route("open youtube"), intent::first_video_id(""), plan::parse("wait 1"), agent::tools(), mover::resolve("x", &[]), retry::Fleet::new(1, Vec::new()), config::Config::default(), actions::vk("enter"), saathi::TOOLS, tasks::parse_task(204, ""), guard::assess(&[], &[], ""), guard::incident as fn(&guard::Verdict, &[String], Option<String>) -> serde_json::Value, guard::should_redact(""), tasks::report_incident as fn(u16, &serde_json::Value) -> Result<String, String>, tasks::hold_active as fn(u16, &str) -> Result<bool, String>, tasks::next as fn(u16) -> Result<Option<tasks::Task>, String>, tasks::report as fn(u16, &str, &str, &str) -> Result<(), String>);
     eprintln!("Sahay drives a Windows PC. Build it for Windows: cargo build --release -p sahay --target x86_64-pc-windows-msvc");
     std::process::exit(64);
 }

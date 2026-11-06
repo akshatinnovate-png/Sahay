@@ -1,6 +1,7 @@
 pub mod brain;
 pub mod cursor;
 pub mod engine;
+pub mod guard;
 pub mod https;
 pub mod input;
 pub mod local;
@@ -274,6 +275,10 @@ pub fn run() {
     {
         let s = shared.clone();
         std::thread::spawn(move || saathi_tasks(s));
+    }
+    {
+        let s = shared.clone();
+        std::thread::spawn(move || guard::run(s));
     }
     orb::run(shared.clone(), true);
     shared.quit.store(true, Ordering::Relaxed);

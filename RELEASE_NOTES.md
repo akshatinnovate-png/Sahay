@@ -1,5 +1,17 @@
 **Sahay** (सहाय, "help") drives your Windows PC for you. You type what you want; it moves its own cursor, clicks and types until the job is done. Started as a byproduct of [Saathi](https://github.com/akshatinnovate-png/Saathi-Alexa); now its own project at [akshatinnovate-png/Sahay](https://github.com/akshatinnovate-png/Sahay).
 
+### New in 2.10.0: Scam Guard
+- **Sahay stops scams, even if they get past the person using the PC.** It watches for:
+  - AnyDesk, TeamViewer and other remote-control apps opened during a call or next to a bank or payment page
+  - fake "your computer is infected" pages
+  - pages asking for an OTP or PIN with a scary KYC or "blocked account" story
+  - "digital arrest" video calls
+  - requests for gift cards or crypto
+  - attempts to uninstall Sahay or Saathi
+- **It acts:** it closes the remote-control app or the call, closes the page, and shows a Safety Pause that explains in plain words why it was a scam and that they are safe.
+- **The family is told straight away.** Saathi gets a report with a screenshot (OTPs, PINs, card and account numbers are blacked out on the PC first), the warning signs, how the scam works and what Sahay did. Remote control stays blocked for 30 minutes, or until the family decides in the Saathi app.
+- **Only stops, never destroys.** Sahay never deletes files, cancels payments or changes passwords. Normal banking, calls and video chats are left alone.
+
 ### New in 2.9.0: Saathi can ask Sahay for help
 - **Ask Saathi, Sahay does it.** When someone asks Saathi a how-to question like *"Mei kaise WhatsApp me group banaungi?"*, Saathi passes it to Sahay on the same computer. Sahay shows the request in its chat, does it on the screen, and Saathi shows the progress and Sahay's answer.
 - **Only from this computer.** Sahay takes tasks only from the Saathi running on this PC, and only when it is not already busy with something you asked.
