@@ -50,6 +50,7 @@ pub struct Shared {
     voice: Mutex<Option<Sender<String>>>,
     state: Mutex<(Status, String)>,
     config: Mutex<Config>,
+    last_reply: Mutex<String>,
 }
 
 fn post(handle: &AtomicIsize, msg: u32, lparam: isize) -> bool {
@@ -94,6 +95,9 @@ impl Shared {
     }
 
     pub fn reply(&self, text: &str) {
+        if let Ok(mut last) = self.last_reply.lock() {
+            *last = text.trim().to_string();
+        }
         self.say("Sahay", text);
         if self.config().speak {
             if let Ok(v) = self.voice.lock() {
@@ -166,6 +170,52 @@ fn routines(shared: Arc<Shared>) {
     }
 }
 
+fn wait_until(shared: &Shared, limit: Duration, done: impl Fn() -> bool) -> bool {
+    let start = std::time::Instant::now();
+    while start.elapsed() < limit {
+        if done() {
+            return true;
+        }
+        if shared.quit.load(Ordering::Relaxed) {
+            return false;
+        }
+        std::thread::sleep(Duration::from_millis(250));
+    }
+    false
+}
+
+fn saathi_tasks(shared: Arc<Shared>) {
+    let port = std::fs::read_to_string(system::home().join("saathi.env")).map(|t| crate::saathi::port_from_env_file(&t)).unwrap_or(8787);
+    loop {
+        if !wait_until(&shared, Duration::from_secs(3), || false) && shared.quit.load(Ordering::Relaxed) {
+            return;
+        }
+        if shared.busy.load(Ordering::Relaxed) || shared.asking_key.load(Ordering::Relaxed) {
+            continue;
+        }
+        let task = match crate::tasks::next(port) {
+            Ok(Some(task)) => task,
+            Ok(None) | Err(_) => continue,
+        };
+        system::log(&format!("saathi task {}: {}", task.id, task.instruction));
+        shared.say("Saathi", &format!("📩 {}", task.shown()));
+        let _ = crate::tasks::report(port, &task.id, "working", "");
+        if let Ok(mut last) = shared.last_reply.lock() {
+            last.clear();
+        }
+        if shared.asks.send(task.instruction.clone()).is_err() {
+            let _ = crate::tasks::report(port, &task.id, "failed", "Sahay is closing.");
+            return;
+        }
+        wait_until(&shared, Duration::from_secs(15), || shared.busy.load(Ordering::Relaxed));
+        let finished = wait_until(&shared, Duration::from_secs(20 * 60), || !shared.busy.load(Ordering::Relaxed));
+        let said = shared.last_reply.lock().map(|l| l.clone()).unwrap_or_default();
+        let stopped = !finished || matches!(shared.status(), Status::Stopped | Status::Error);
+        let note = if said.is_empty() { if stopped { "Sahay was stopped before it finished." } else { "Done." } } else { said.as_str() };
+        let _ = crate::tasks::report(port, &task.id, if stopped { "failed" } else { "done" }, note);
+    }
+}
+
 fn first_key() -> Option<Vec<String>> {
     let _ = system::shell_open("https://console.groq.com/keys", "open");
     let mut prompt = "Sahay thinks with Groq (free). Groq's key page is opening: sign in, click Create API Key, copy it, and paste it here. Several keys can be separated by commas.";
@@ -211,6 +261,7 @@ pub fn run() {
         voice: Mutex::new(voice::start()),
         state: Mutex::new((Status::Idle, "Click me to talk".into())),
         config: Mutex::new(config),
+        last_reply: Mutex::new(String::new()),
     });
     {
         let s = shared.clone();
@@ -219,6 +270,10 @@ pub fn run() {
     {
         let s = shared.clone();
         std::thread::spawn(move || routines(s));
+    }
+    {
+        let s = shared.clone();
+        std::thread::spawn(move || saathi_tasks(s));
     }
     orb::run(shared.clone(), true);
     shared.quit.store(true, Ordering::Relaxed);
