@@ -65,6 +65,24 @@ pub fn report(port: u16, id: &str, status: &str, note: &str) -> Result<(), Strin
     Ok(())
 }
 
+pub fn report_incident(port: u16, incident: &Value) -> Result<String, String> {
+    let (code, body) = request(port, "POST", "/sahay/incidents", Some(incident))?;
+    if code >= 400 {
+        return Err(format!("Saathi did not take the report ({code})"));
+    }
+    let v: Value = serde_json::from_str(&body).map_err(|_| "Saathi's answer could not be read".to_string())?;
+    v["id"].as_str().map(str::to_string).ok_or_else(|| "Saathi did not return an incident id".to_string())
+}
+
+pub fn hold_active(port: u16, id: &str) -> Result<bool, String> {
+    let (code, body) = request(port, "GET", &format!("/sahay/holds/{id}"), None)?;
+    if code >= 400 {
+        return Err(format!("Saathi did not answer about the hold ({code})"));
+    }
+    let v: Value = serde_json::from_str(&body).map_err(|_| "Saathi's answer could not be read".to_string())?;
+    Ok(v["active"].as_bool().unwrap_or(true))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -113,5 +131,36 @@ mod tests {
         assert!(seen[0].starts_with("GET /sahay/next HTTP/1.1") && seen[0].contains("X-Sahay: 1"));
         assert!(seen[1].starts_with("POST /sahay/tasks/t1") && seen[1].contains("\"note\":\"Made the group Family\""));
         assert!(next(1).is_err());
+    }
+
+    #[test]
+    fn incidents_are_reported_and_holds_are_read() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let server = std::thread::spawn(move || {
+            let mut seen = Vec::new();
+            for answer in [
+                "HTTP/1.1 200 OK\r\n\r\n{\"id\":\"guard-1\",\"holdUntil\":\"x\"}",
+                "HTTP/1.1 200 OK\r\n\r\n{\"active\":false,\"approved\":true}",
+                "HTTP/1.1 403 Forbidden\r\n\r\n{}",
+                "HTTP/1.1 500 Oops\r\n\r\n{}",
+                "HTTP/1.1 200 OK\r\n\r\n{}",
+            ] {
+                let (mut s, _) = listener.accept().unwrap();
+                let mut buf = [0u8; 8192];
+                let n = s.read(&mut buf).unwrap();
+                seen.push(String::from_utf8_lossy(&buf[..n]).to_string());
+                s.write_all(answer.as_bytes()).unwrap();
+            }
+            seen
+        });
+        assert_eq!(report_incident(port, &json!({ "kind": "remote-access" })).unwrap(), "guard-1");
+        assert!(!hold_active(port, "guard-1").unwrap());
+        assert!(hold_active(port, "guard-1").is_err());
+        assert!(report_incident(port, &json!({})).is_err());
+        assert!(report_incident(port, &json!({})).is_err());
+        let seen = server.join().unwrap();
+        assert!(seen[0].starts_with("POST /sahay/incidents") && seen[0].contains("remote-access"));
+        assert!(seen[1].starts_with("GET /sahay/holds/guard-1"));
     }
 }
