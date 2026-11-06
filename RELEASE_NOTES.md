@@ -1,5 +1,9 @@
 **Sahay** (सहाय, "help") drives your Windows PC for you. You type what you want; it moves its own cursor, clicks and types until the job is done. Started as a byproduct of [Saathi](https://github.com/akshatinnovate-png/Saathi-Alexa); now its own project at [akshatinnovate-png/Sahay](https://github.com/akshatinnovate-png/Sahay).
 
+### New in 2.9.0: Saathi can ask Sahay for help
+- **Ask Saathi, Sahay does it.** When someone asks Saathi a how-to question like *"Mei kaise WhatsApp me group banaungi?"*, Saathi passes it to Sahay on the same computer. Sahay shows the request in its chat, does it on the screen, and Saathi shows the progress and Sahay's answer.
+- **Only from this computer.** Sahay takes tasks only from the Saathi running on this PC, and only when it is not already busy with something you asked.
+
 ### New in 2.8.3: learns from 800,000-task datasets
 - **Teach it a whole folder.** `learn from C:\...\sahay-800k` imports every part in the folder, one after another, with progress in the chat.
 - **Stays fast with huge knowledge.** A word index finds similar tasks among hundreds of thousands instantly, instant templates are kept in their own list, and Sahay's own knowledge file loads quickly at start-up.

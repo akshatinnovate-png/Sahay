@@ -235,7 +235,7 @@ dependencies = [
 
 [[package]]
 name = "sahay"
-version = "2.8.3"
+version = "2.9.0"
 dependencies = [
  "base64",
  "native-tls",
